@@ -1,0 +1,12 @@
+{
+  "name": "@openharness/cli",
+  "version": "0.0.1",
+  "description": "PARKED. The fork ships its own dsh CLI (packages/deepseek-harness/apps/cli). A wrapper is re-evaluated in refactor Phase 5; no dependency on the fork until the consumption mechanism spike (open question A) decides it.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo parked: see docs/refactor-plan.md Phase 5 && exit 0",
+    "build": "echo parked: see docs/refactor-plan.md Phase 5 && exit 0",
+    "typecheck": "echo parked && exit 0"
+  }
+}

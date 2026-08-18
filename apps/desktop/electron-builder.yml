@@ -1,0 +1,36 @@
+appId: com.openharness.desktop
+productName: OpenHarness Desktop
+directories:
+  output: dist-electron
+  buildResources: build
+asar: true
+# Physical runtime entries must live outside the asar archive: the Host child
+# boots built JS from the staged runtime closure, and anything Node must
+# resolve/exec physically gets unpacked. scripts/runtime-gate.mjs verifies
+# the staged entries before packaging.
+asarUnpack:
+  - "**/*.node"
+files:
+  - out/**/*
+  - package.json
+  - "!**/node_modules/**"
+extraResources:
+  # Staged Host runtime closure (published DSH family + dsh-plugin-desktop),
+  # produced by scripts/stage-runtime.mjs; anchored at process.resourcesPath/runtime.
+  - from: ../../runtime/desktop
+    to: runtime
+    filter:
+      - "**/*"
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development

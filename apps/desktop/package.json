@@ -1,0 +1,25 @@
+{
+  "name": "@openharness/desktop",
+  "productName": "OpenHarness Desktop",
+  "version": "0.0.1",
+  "description": "The real desktop code: thin Electron host. Main process boots the forked DSH Host Cordis generation and the sandboxed renderer loads the official Web UI over the loopback HTTP/WebSocket carrier. No IPC inference channel and no Electron API in the page.",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "electron-vite preview",
+    "package": "electron-vite build && electron-builder --dir",
+    "release": "electron-vite build && electron-builder"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "^43.0.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

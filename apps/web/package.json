@@ -1,0 +1,12 @@
+{
+  "name": "@openharness/web",
+  "version": "0.0.1",
+  "description": "PARKED. Under the loopback-carrier architecture the browser surface is the fork's own web profile (dsh --profile web). This placeholder is re-evaluated in refactor Phase 5 before any code lands here.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo parked: see docs/refactor-plan.md Phase 5 && exit 0",
+    "build": "echo parked: see docs/refactor-plan.md Phase 5 && exit 0",
+    "typecheck": "echo parked && exit 0"
+  }
+}
