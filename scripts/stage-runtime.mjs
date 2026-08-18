@@ -55,6 +55,11 @@ const manifest = {
     '@deepseek-ai/dsh': RUNTIME_FAMILY,
     '@deepseek-ai/dsh-base': RUNTIME_FAMILY,
     '@deepseek-ai/dsh-web-app': RUNTIME_FAMILY,
+    // Bundled package manager for packaged `desktopPnpm.runPlugin()`: the
+    // fork's `dsh plugin` forwarder shells out to `pnpm` on PATH, and the
+    // packaged app has no ambient pnpm. The launcher generates a `pnpm` shim
+    // over this JS entry (see apps/desktop/src/main/paths.ts).
+    pnpm: '11.7.0',
     'dsh-plugin-desktop': `file:${pluginTarball}`,
   },
 };

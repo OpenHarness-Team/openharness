@@ -40,6 +40,10 @@
       "types": "./lib/host/probe-pnpm.d.ts",
       "default": "./lib/host/probe-pnpm.js"
     },
+    "./host/probe-plugin": {
+      "types": "./lib/host/probe-plugin.d.ts",
+      "default": "./lib/host/probe-plugin.js"
+    },
     "./client": {
       "types": "./lib/client/index.d.ts",
       "default": "./lib/client/index.js"

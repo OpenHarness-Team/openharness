@@ -10,7 +10,7 @@
  */
 
 import { type ChildProcess, spawn } from 'node:child_process';
-import { isAbsolute } from 'node:path';
+import { delimiter, isAbsolute } from 'node:path';
 import { Service } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
 import type { CordisContext } from '../internal/context.js';
@@ -31,6 +31,17 @@ export interface Config {
    * Empty until the launcher composes it; `runPlugin()` fails loud without it.
    */
   dshCommand: string[];
+  /**
+   * Directories prepended to PATH for managed child processes. Packaged mode
+   * points this at launcher-generated `pnpm`/`node` shims over the Electron
+   * binary (no ambient package manager on a user machine).
+   */
+  pathPrepend: string[];
+  /**
+   * Environment overrides for managed child processes (for example DSH_HOME
+   * so `dsh plugin` resolves the same profiles as the launcher).
+   */
+  extraEnv: Record<string, string>;
 }
 
 /** Validate a shell-free argv: non-empty, every entry a NUL-free string. */
@@ -67,6 +78,8 @@ export class DesktopPnpmService extends Service implements DesktopPnpm {
   static Config: z<Config> = z.object({
     pnpmCommand: z.array(z.string()).required(),
     dshCommand: z.array(z.string()).required(),
+    pathPrepend: z.array(z.string()).default([]),
+    extraEnv: z.dict(z.string()).default({}),
   });
 
   private active: OperationHandle | undefined;
@@ -111,10 +124,16 @@ export class DesktopPnpmService extends Service implements DesktopPnpm {
   private start(argv: readonly string[], cwd: string, signal?: AbortSignal): DesktopPnpmHandle {
     if (this.active !== undefined)
       throw new Error('desktopPnpm: one operation per generation is already running');
+    const env = { ...process.env, ...this.config.extraEnv };
+    if (this.config.pathPrepend.length > 0) {
+      env.PATH = [...this.config.pathPrepend, process.env.PATH ?? '']
+        .filter((entry) => entry.length > 0)
+        .join(delimiter);
+    }
     const child = spawn(argv[0] ?? '', argv.slice(1), {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
+      env,
     });
     const handle = new OperationHandle(child);
     this.active = handle;

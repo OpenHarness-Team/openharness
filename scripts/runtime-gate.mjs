@@ -17,6 +17,9 @@ const STAGE = join(ROOT, 'runtime', 'desktop');
 const REQUIRED_ENTRIES = [
   // Host entry the packaged child boots (plain built JS, no tsx).
   'node_modules/@deepseek-ai/dsh/lib/bin.js',
+  // Bundled pnpm entry the packaged desktopPnpm service runs (directly and
+  // through the generated `pnpm` PATH shim used by `dsh plugin`).
+  'node_modules/pnpm/bin/pnpm.cjs',
   // Bundle layers the desktop profile composes.
   'node_modules/@deepseek-ai/dsh-base/cordis.patch.yml',
   'node_modules/@deepseek-ai/dsh-web-app/cordis.patch.yml',

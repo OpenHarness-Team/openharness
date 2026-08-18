@@ -12,10 +12,21 @@ import { join } from 'node:path';
 import { app } from 'electron';
 import { type ControlServer, startControlServer } from './control.js';
 import { type Generation, startGeneration } from './generation.js';
+import {
+  type DesktopMode as SettingsMode,
+  advancedSupported,
+  readMode,
+  writeMode,
+} from './mode.js';
 import { type DesktopMode, composeDesktopLayer } from './overlay.js';
-import { dshHome, isPackagedRuntime, pluginLibDir, runtimeDir } from './paths.js';
+import {
+  composeDesktopPnpm,
+  dshHome,
+  isPackagedRuntime,
+  pluginLibDir,
+  runtimeDir,
+} from './paths.js';
 import { DESKTOP_PROFILE_NAME, ensureDesktopProfile } from './profile.js';
-import { type DesktopMode as SettingsMode, advancedSupported, readMode, writeMode } from './mode.js';
 
 /** Desktop-private state persisted under Electron user data. */
 interface DesktopState {
@@ -94,17 +105,26 @@ export class Launcher {
     // advanced value rather than mapping it to a different presentation.
     const committedMode: SettingsMode = readMode(home);
     const mode: DesktopMode =
-      committedMode === 'advanced' && advancedSupported(process.platform) ? 'advanced' : 'compatibility';
+      committedMode === 'advanced' && advancedSupported(process.platform)
+        ? 'advanced'
+        : 'compatibility';
     if (committedMode === 'advanced' && mode === 'compatibility') {
-      console.error(`[launcher] platform ${process.platform} rejects dsh-desktop.mode: advanced; composing compatibility`);
+      console.error(
+        `[launcher] platform ${process.platform} rejects dsh-desktop.mode: advanced; composing compatibility`,
+      );
     }
     this.composedMode = mode;
+    const desktopPnpm = composeDesktopPnpm(app.getPath('userData'));
 
     const overlay = composeDesktopLayer({
       pluginLibDir: pluginLibDir(),
       profileName: state.profile,
       profileDir,
       mode,
+      pnpmCommand: desktopPnpm.pnpmCommand,
+      dshCommand: desktopPnpm.dshCommand,
+      pathPrepend: desktopPnpm.pathPrepend,
+      extraEnv: desktopPnpm.extraEnv,
       outDir: app.getPath('userData'),
       controlUrl: control.url,
       controlToken: control.token,
@@ -148,7 +168,9 @@ export class Launcher {
    */
   setMode(mode: SettingsMode): void {
     if (mode === 'advanced' && !advancedSupported(process.platform)) {
-      console.error(`[launcher] platform ${process.platform} does not support advanced mode; selection rejected`);
+      console.error(
+        `[launcher] platform ${process.platform} does not support advanced mode; selection rejected`,
+      );
       return;
     }
     if (mode === this.composedMode) return;
