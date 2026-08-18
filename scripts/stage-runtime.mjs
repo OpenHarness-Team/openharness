@@ -13,21 +13,36 @@
  * Usage: node scripts/stage-runtime.mjs
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = dirname(fileURLToPath(new URL('.', import.meta.url)));
 const RUNTIME = join(ROOT, 'runtime');
 const STAGE = join(RUNTIME, 'desktop');
+const PLUGIN = join(ROOT, 'packages', 'dsh-plugin-desktop');
 const RUNTIME_FAMILY = '0.1.0-rc.7';
 
 mkdirSync(STAGE, { recursive: true });
 
-// Isolated workspace marker: without it pnpm walks up to the repo root
-// workspace and installs nothing for the staged closure.
-writeFileSync(join(RUNTIME, 'pnpm-workspace.yaml'), 'packages:\n  - "desktop"\n');
+// The runtime consumes built JS from the local plugin, so require it before
+// staging. This also keeps stage-runtime honest: never stage a half-built plugin.
+if (!existsSync(join(PLUGIN, 'lib', 'host', 'bridge.js'))) {
+  throw new Error(
+    'dsh-plugin-desktop/lib is missing; run `pnpm --filter dsh-plugin-desktop build` first',
+  );
+}
 
+// Pack the local plugin to a tarball and depend on the tarball. npm installs
+// directory-based `file:` dependencies as symlinks, which electron-builder
+// extraResources would copy as empty directories inside the app bundle; a
+// tarball installs as a real, physical directory in the staged tree.
+const pluginManifest = JSON.parse(readFileSync(join(PLUGIN, 'package.json'), 'utf8'));
+const pluginTarball = join(RUNTIME, `${pluginManifest.name}-${pluginManifest.version}.tgz`);
+execFileSync('npm', ['pack', '--pack-destination', RUNTIME], {
+  cwd: PLUGIN,
+  stdio: 'inherit',
+});
 
 const manifest = {
   name: 'openharness-desktop-runtime',
@@ -40,7 +55,7 @@ const manifest = {
     '@deepseek-ai/dsh': RUNTIME_FAMILY,
     '@deepseek-ai/dsh-base': RUNTIME_FAMILY,
     '@deepseek-ai/dsh-web-app': RUNTIME_FAMILY,
-    'dsh-plugin-desktop': 'file:../../packages/dsh-plugin-desktop',
+    'dsh-plugin-desktop': `file:${pluginTarball}`,
   },
 };
 writeFileSync(join(STAGE, 'package.json'), `${JSON.stringify(manifest, undefined, 2)}\n`);
