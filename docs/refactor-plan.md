@@ -49,11 +49,11 @@
 **动作**
 
 1. ✅ 上游基线已记录于根级 `upstream.json`(tag `dsh-v0.1.0-rc.7` @ `99f6f02`)。可选增量:本地维护 upstream 镜像分支供 `git diff` 审查补丁。
-2. 新建 `packages/deepseek-harness/PATCHES.md` 补丁台账:每条补丁记录动机、涉及包、上游同步策略(重放/废弃/已上游化)。当前台账为空——fork 尚未打任何补丁。
-3. 约定:fork 内的非平凡修改遵守 fork 自身 `AGENTS.md`(Agent Note、测试、`verify-*` gates);补丁提交信息使用 `patch:` 前缀便于检索。
-4. 跑通 fork 基线验证:`pnpm run typecheck`、`pnpm run test`(记录基线结果,后续补丁与之对比;全量测试耗时大,可先记录 unit 子集基线)。
+2. ✅ 新建 `packages/deepseek-harness/PATCHES.md` 补丁台账:每条补丁记录动机、涉及包、上游同步策略(重放/废弃/已上游化)。当前台账为空——fork 尚未打任何补丁。
+3. ✅ 约定:fork 内的非平凡修改遵守 fork 自身 `AGENTS.md`(Agent Note、测试、`verify-*` gates);补丁提交信息使用 `patch:` 前缀便于检索。
+4. ✅ 跑通 fork 基线验证:`pnpm run typecheck`、`pnpm run test`,结果已记录于 `docs/fork-baseline.md`(13507 通过 / 0 失败 / 109 跳过)。
 
-**验收**:基线构建/测试通过并记录;`PATCHES.md` 存在且格式定稿。
+**验收**:✅ 基线构建/测试通过并记录;`PATCHES.md` 存在且格式定稿。
 
 ## Phase 2 — dsh-plugin-desktop 骨架
 
