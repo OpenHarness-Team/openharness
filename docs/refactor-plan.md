@@ -39,7 +39,7 @@
 
 1. ✅ `apps/desktop`/`apps/cli` 的失效依赖已删除;`apps/web`/`cli`/`mobile` 已 parked。消费机制在开放问题 A 的 spike 后定,**此前根 workspace 任何包不得声明对 fork 的依赖**。
 2. ✅ 根 scripts 已加 `fork:install`/`fork:build`/`fork:test`(turbo 不深入 fork 内部任务)。turbo 与 fork 的边界维持:fork 任务不进 turbo 图,避免 turbo 缓存误判嵌套 workspace 的 lockfile;CI 中作为前置步骤显式执行。
-3. 根 `.gitignore` 核对 fork 的构建产物(`lib/`、`dist/`、`.turbo` 等)。
+3. ✅ 根 `.gitignore` 已核对并覆盖 fork 的构建产物(`lib/`、`dist/`、`out/`、`.turbo` 等)及桌面端打包产物 `dist-electron/`。
 4. ✅ 版本对齐:根 `engines` 已升 `>=22.19.0`;**根 pnpm@9.15.0 与 fork 声明的 pnpm@11.7.0 并存**——fork 目录内遵循其自身 packageManager(建议 CI 用 corepack 固定双版本),README 已说明。
 
 **验收**:根 `pnpm install` 成功且 lockfile 不再包含 fork 依赖图;fork 目录内独立 `pnpm install && pnpm run build:lib` 成功;`biome check .` 不触及 fork。
@@ -112,19 +112,21 @@
 0. ✅ **Host↔launcher 控制通道(选项 d 的接缝)**:`apps/desktop/src/main/control.ts`(token 鉴权、127.0.0.1 临时端口的 loopback HTTP 控制面)+ `dsh-plugin-desktop/src/host/bridge.ts`(`desktop-bridge` row,provide `ctx.desktopRuntime`,经控制面转发 `requestRestart`/托盘条目/窗口值)。launcher 在组合前启动控制面并把 `controlUrl`/`token` 注入 overlay。
 1. ✅ **bridge 完整回环冒烟**:`spike/smoke-bridge.mjs` `SMOKE_BRIDGE_OK register=true restart="settings-committed"` —— 挂载即注册;提交 `settings.yaml` 模式变更 → desktop-shell watcher → `requestRestart` → 控制面收到。
 2. ✅ **desktopPnpm 端到端探针**:`spike/smoke-pnpm.mjs` `SMOKE_PNPM_OK exit=0 version=9.15.0` —— 第三方风格 row 经 `ctx.inject` 消费两个公开 service,受管句柄跑通 `pnpm --version`。
-3. ✅ **运行时闭包 staging**:`scripts/stage-runtime.mjs` 在隔离 workspace(`runtime/pnpm-workspace.yaml`)安装已发布 0.1.0-rc.7 家族(`@deepseek-ai/dsh`/`dsh-base`/`dsh-web-app`)+ 本地 `dsh-plugin-desktop` → `runtime/desktop/`。**关键决策:零补丁期 staging 用 npm 已发布包(与参考项目同构);首个偏离补丁起改用 fork `release:pack` tarball 并登记 PATCHES.md。**
+3. ✅ **运行时闭包 staging**:`scripts/stage-runtime.mjs` 用 npm 在 `runtime/desktop/` 安装已发布 0.1.0-rc.7 家族(`@deepseek-ai/dsh`/`dsh-base`/`dsh-web-app`)+ 本地 `dsh-plugin-desktop` 的 tarball(npm 对目录型 `file:` 依赖会装成符号链接,electron-builder 复制后会变成空目录,故先 `npm pack` 成物理 tarball)。**关键决策:零补丁期 staging 用 npm 已发布包(与参考项目同构);首个偏离补丁起改用 fork `release:pack` tarball 并登记 PATCHES.md。**
 4. ✅ **Packaged runtime gate**:`scripts/runtime-gate.mjs` 校验 8 个物理入口(dsh bin.js、两个 bundle patch、四个插件 row、插件 patch)+ native 模块清点。**PASS,无 native 告警**(web 闭包无 node-pty;landlock-run 仅 Linux)。
 5. ✅ **打包态 launcher 支持**:`paths.ts`(`runtimeDir`/`pluginLibDir` 打包分支锚定 `process.resourcesPath/runtime`)+ `generation.ts`(`hostMode: packaged` 走构建的 `lib/bin.js`,无 tsx)+ `electron-builder.yml`(asar + asarUnpack + extraResources `runtime/`)。
 6. ✅ **打包形态启动冒烟**:`spike/packaged-boot.mjs` `PACKAGED_BOOT_OK runtime=staged-closure` —— 构建 bin + staged 闭包 + staged 插件 artifacts 组合 desktop 层,carrier HTTP 200;bridge 对 stub 控制面的 fetch 失败被正确容忍。
 7. ✅ onboarding(Phase 3 已完成)。
+8. ✅ **macOS 未签名安装包与冷启动(2026-08-18)**:`electron-builder --mac dmg zip` 产出 arm64 dmg/zip;staged runtime 为完整物理闭包(runtime-gate PASS);`.app` 冷启动后 Host 子进程从 `Resources/runtime` 启动,carrier 200(`DeepSeek Harness`)、控制面 401,退出后无孤儿进程、端口释放。
 
 **剩余(需要目标平台/签名环境)**
 
-- 在 macOS/Windows 真实执行 `electron-builder`(dmg/zip、nsis),产物冷启动验证;代码签名与公证。
+- Windows 真实执行 `electron-builder`(nsis),产物冷启动验证。
+- macOS/Windows 代码签名与公证。
 - 打包态 `desktopPnpm.runPlugin()`:staging 内置 pnpm/dsh 入口的可执行选择与子进程私有环境(当前 `dshCommand` 空时 fail loud,符合设计)。
 - 第三方插件在打包态经 `dsh plugin` 的安装链路(依赖 runPlugin + 内置 pnpm)。
 
-**验收(已达成部分)**:控制通道与 desktopPnpm 全链路冒烟通过;staged 闭包 gate PASS;打包形态子进程启动并服务官方 Web UI。**安装包级验收**(双平台冷启动 + `dsh plugin` 链路)留待签名构建环境。
+**验收(已达成部分)**:控制通道与 desktopPnpm 全链路冒烟通过;staged 闭包 gate PASS;macOS 未签名 dmg/zip + `.app` 冷启动通过(打包态子进程启动并服务官方 Web UI)。**安装包级剩余验收**:Windows 冷启动、代码签名/公证、`dsh plugin` 链路。
 
 ## Phase 5 — advanced 模式与增强(可选增量)
 
