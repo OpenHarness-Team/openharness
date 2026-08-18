@@ -1,0 +1,21 @@
+# dsh-plugin-desktop bundle layer: inserted by the apps/desktop launcher AFTER
+# dsh-web-app (never persisted into the selected profile's bundle list).
+# A patch replaces a targeted row's whole config, so the launcher's overlay
+# restates every field of every row (active profile identity, composed mode,
+# executable selection). Row order carries no load semantics.
+
+- insert:
+    - id: desktop-profiles
+      name: 'dsh-plugin-desktop/host/profiles'
+      config:
+        name: 'desktop'
+        dir: ''
+
+    - id: desktop-pnpm
+      name: 'dsh-plugin-desktop/host/pnpm'
+      config: {}
+
+    - id: desktop-shell
+      name: 'dsh-plugin-desktop/host/shell'
+      config:
+        mode: 'compatibility'

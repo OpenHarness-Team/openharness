@@ -1,0 +1,70 @@
+{
+  "name": "dsh-plugin-desktop",
+  "version": "0.0.1",
+  "description": "Cordis plugin package integrating the Electron desktop host with DeepSeek Harness. Host face provides ctx.desktopProfiles / ctx.desktopPnpm services and the dsh-desktop settings namespace; Client face validates mode markers. Contains no Electron application code (that lives in apps/desktop). The npm name is owned by the reference project; this package stays private.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "exports": {
+    "./profile-service": {
+      "types": "./lib/profile-service.d.ts",
+      "default": "./lib/profile-service.js"
+    },
+    "./pnpm": {
+      "types": "./lib/pnpm.d.ts",
+      "default": "./lib/pnpm.js"
+    },
+    "./runtime": {
+      "types": "./lib/runtime.d.ts",
+      "default": "./lib/runtime.js"
+    },
+    "./host/profiles": {
+      "types": "./lib/host/profiles.d.ts",
+      "default": "./lib/host/profiles.js"
+    },
+    "./host/pnpm": {
+      "types": "./lib/host/pnpm.d.ts",
+      "default": "./lib/host/pnpm.js"
+    },
+    "./host/shell": {
+      "types": "./lib/host/shell.d.ts",
+      "default": "./lib/host/shell.js"
+    },
+    "./host/bridge": {
+      "types": "./lib/host/bridge.d.ts",
+      "default": "./lib/host/bridge.js"
+    },
+    "./host/probe-pnpm": {
+      "types": "./lib/host/probe-pnpm.d.ts",
+      "default": "./lib/host/probe-pnpm.js"
+    },
+    "./client": {
+      "types": "./lib/client/index.d.ts",
+      "default": "./lib/client/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-settings": "0.1.0-rc.7",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.3"
+  }
+}
