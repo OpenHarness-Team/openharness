@@ -4,6 +4,10 @@ directories:
   output: dist-electron
   buildResources: build
 asar: true
+# No @electron/rebuild pass: the packaged asar closure carries no native
+# modules (files: excludes node_modules), and the staged Host runtime closure
+# (extraResources) executes under ELECTRON_RUN_AS_NODE = plain Node semantics.
+npmRebuild: false
 # Physical runtime entries must live outside the asar archive: the Host child
 # boots built JS from the staged runtime closure, and anything Node must
 # resolve/exec physically gets unpacked. scripts/runtime-gate.mjs verifies

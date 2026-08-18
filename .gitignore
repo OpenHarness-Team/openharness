@@ -9,6 +9,8 @@ build/
 out/
 lib/
 *.tsbuildinfo
+# electron-builder output for apps/desktop
+dist-electron/
 
 # Staged packaged runtime closure (scripts/stage-runtime.mjs)
 /runtime/

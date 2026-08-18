@@ -28,6 +28,7 @@ mkdirSync(STAGE, { recursive: true });
 // workspace and installs nothing for the staged closure.
 writeFileSync(join(RUNTIME, 'pnpm-workspace.yaml'), 'packages:\n  - "desktop"\n');
 
+
 const manifest = {
   name: 'openharness-desktop-runtime',
   version: '0.0.1',
@@ -45,5 +46,13 @@ const manifest = {
 writeFileSync(join(STAGE, 'package.json'), `${JSON.stringify(manifest, undefined, 2)}\n`);
 
 console.log(`stage-runtime: installing closure into ${STAGE}`);
-execFileSync('pnpm', ['install'], { cwd: STAGE, stdio: 'inherit' });
+// npm (not pnpm): the packaged closure must be a fully physical tree.
+// electron-builder extraResources drops dot-directories (pnpm's .pnpm
+// virtual store), which would leave a pnpm-staged closure as dangling
+// symlinks inside the app bundle. npm installs real directories.
+// --ignore-scripts matches the fork install stance (no postinstall hooks).
+execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+  cwd: STAGE,
+  stdio: 'inherit',
+});
 console.log('stage-runtime: done; verify with node scripts/runtime-gate.mjs');
