@@ -1,0 +1,6 @@
+# 根 workspace 只包含自有包。packages/deepseek-harness 是 fork 内核,
+# 保持其自身独立的 pnpm workspace(隔离安装/构建),不被根 workspace 吸收。
+# 见 docs/architecture.md「仓库结构与所有权边界」。
+packages:
+  - "packages/dsh-plugin-desktop"
+  - "apps/*"

@@ -7,7 +7,11 @@ node_modules/
 dist/
 build/
 out/
+lib/
 *.tsbuildinfo
+
+# Staged packaged runtime closure (scripts/stage-runtime.mjs)
+/runtime/
 
 # Logs
 logs/
@@ -45,6 +49,9 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Vendored fork of upstream deepseek-harness (nested git repo, tracked separately)
+/fork/
 
 # Misc
 *.local

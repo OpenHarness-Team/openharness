@@ -1,0 +1,30 @@
+{
+  "name": "openharness",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OpenHarness monorepo: forked DeepSeek Harness kernel (Cordis), dsh-plugin-desktop Cordis plugin, and the Electron desktop host.",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "fork:install": "pnpm --dir packages/deepseek-harness install",
+    "fork:build": "pnpm --dir packages/deepseek-harness run build",
+    "fork:test": "pnpm --dir packages/deepseek-harness run test",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.11",
+    "turbo": "^2.3.3",
+    "typescript": "^5.6.3"
+  }
+}
