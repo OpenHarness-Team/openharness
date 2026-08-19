@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+  DSH_TELEMETRY_DISABLED: '1'
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+  # Unsigned installers for now; signing/notarization is a separate Phase 4 item.
+  CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.23.2
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare root pnpm
+        run: corepack prepare pnpm@9.15.0 --activate
+
+      - name: Cache root pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-release-${{ matrix.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-release-${{ matrix.os }}-
+
+      - name: Install root workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop plugin
+        run: pnpm --filter dsh-plugin-desktop build
+
+      - name: Stage packaged runtime closure
+        run: node scripts/stage-runtime.mjs
+
+      - name: Verify packaged runtime gate
+        run: node scripts/runtime-gate.mjs
+
+      - name: Build installers
+        run: pnpm --filter @openharness/desktop release
+
+      - name: Generate SHA-256 checksums
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const crypto = require("crypto");
+            const dir = "apps/desktop/dist-electron";
+            const pattern = /\.(dmg|zip|exe|AppImage|deb|blockmap)$/;
+            const files = fs.readdirSync(dir).filter((name) => pattern.test(name)).sort();
+            const lines = files.map((name) => {
+              const digest = crypto
+                .createHash("sha256")
+                .update(fs.readFileSync(path.join(dir, name)))
+                .digest("hex");
+              return `${digest}  ${name}`;
+            });
+            fs.writeFileSync(path.join(dir, "SHA256SUMS"), `${lines.join("\n")}\n`);
+            console.log(fs.readFileSync(path.join(dir, "SHA256SUMS"), "utf8"));
+          '
+
+      - name: Upload installers and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: openharness-${{ matrix.os }}
+          path: |
+            apps/desktop/dist-electron/*.dmg
+            apps/desktop/dist-electron/*.zip
+            apps/desktop/dist-electron/*.exe
+            apps/desktop/dist-electron/*.AppImage
+            apps/desktop/dist-electron/*.deb
+            apps/desktop/dist-electron/SHA256SUMS
+          if-no-files-found: error
