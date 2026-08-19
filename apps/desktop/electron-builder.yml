@@ -38,3 +38,5 @@ linux:
     - AppImage
     - deb
   category: Development
+  # Avoid fpm writing a deb into a non-existent `@openharness/` directory.
+  packageName: openharness-desktop
