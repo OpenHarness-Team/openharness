@@ -136,14 +136,14 @@
 
 ## Phase 6 — CI 与发布
 
-1. CI:根 install → fork install/build/test(隔离缓存)→ dsh-plugin-desktop gates → desktop 构建;Linux 容器只验证 compatibility 面。两套包管理在 CI 中用 corepack 分别固定(根 pnpm 9 / fork 声明版本)。
+1. ✅ **Linux compatibility CI 已就位(2026-08-19)**:`.github/workflows/ci.yml` 重写为根 workspace(pnpm 9.15.0,corepack)与 fork 内核(pnpm 11.7.0,在 fork 目录内 corepack 选择)双版本流程;顺序为根 install → fork install/build → 根 build/typecheck/lint → fork test → desktop compatibility smokes(`profile-ensure`/`mode-smoke`/`loader-smoke`/`smoke-pnpm`)。**Windows NSIS / 签名构建的 runner job 仍随 Phase 4 外部环境补**。
 2. changesets 发布流:`dsh-plugin-desktop` 与 apps 版本联动;fork 不走 changesets,其版本语义由补丁台账 + 基线元数据表达。
 3. Release 工件:安装包 + SHA-256 摘要。
 
 ## 开放问题
 
 - **A. fork 产物消费机制**:✅ 已决(2026-08-18 spike):**选 (d) Host 进程外运行**。Electron main 以 `ELECTRON_RUN_AS_NODE=1` + `--expose-internals` 子进程在 fork workspace 内启动 Host(源码态 `--import tsx/esm apps/cli/src/bin.ts --profile web --port 0`,生产态换构建产物),loopback carrier 跨进程。证据:`spike/boot-test.mjs`(SPIKE_BOOT_OK)、`spike/electron-main.mjs`(SPIKE_ELECTRON_OK,title="DeepSeek Harness")。(a)/(b′) 否决理由见 Phase 2 第 1 条。
-- **B. fork 内 pnpm 与根 pnpm 并存的人因成本**:是否在 CI 用 corepack 固定双版本(当前根 pnpm 9.15.0 / fork 声明 pnpm 11.7.0)。
+- **B. fork 内 pnpm 与根 pnpm 并存的人因成本**:✅ 已落地(2026-08-19):CI 在 `.github/workflows/ci.yml` 用 corepack 分别准备 pnpm 9.15.0 与 11.7.0,fork 步骤以 `working-directory: packages/deepseek-harness` 让 corepack 选择 11.7.0。
 - **C. `desktop` profile 的 bundle 修复策略**:参考项目中 launcher 只修复 installation-owned 前缀、保留第三方顺序;本项目沿用(Phase 3 第 6 条),但若 fork 升级 bundle 名需同步 launcher 常量。
 - **D. 上游同步节奏**:fork 基线为 0.1.0-rc.7(`upstream.json` @ `99f6f02`);上游 rc 演进快,需约定同步触发条件(安全修复/所需特性)与回归基线(Phase 1 记录的测试结果)。
 

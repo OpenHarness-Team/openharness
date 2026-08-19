@@ -13,66 +13,69 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  CI: 'true'
   DSH_TELEMETRY_DISABLED: '1'
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
 
 jobs:
-  # Full product gate: build, typecheck, unit tests, and every headless smoke.
+  # Linux compatibility gate: the two-package-manager install/build/test flow
+  # plus the headless desktop smokes that do not require a GUI or packaging.
+  # Signing/notarization and the unsigned NSIS build stay on real platform
+  # runners (follow-up).
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-          submodules: recursive
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22.23.2
-      - run: corepack enable
-      - name: Resolve Yarn cache folder
-        id: yarn-cache
-        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v6
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
-      - run: yarn check
 
-  # Windows-only logic and an unsigned NSIS build on a real Windows runner:
-  # updates, window options, pwsh sandbox, volume diagnostics, and packaging.
-  desktop-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          submodules: recursive
       - uses: actions/setup-node@v6
         with:
           node-version: 22.23.2
-      - run: corepack enable
-      - name: Resolve Yarn cache folder
-        id: yarn-cache
-        run: echo "dir=$(yarn config get cacheFolder)" >> "$env:GITHUB_OUTPUT"
-      - uses: actions/cache@v6
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
-      - run: yarn workspace dsh-plugin-desktop dist:win
 
-  # Upstream toolchain smoke: the portable-shell scripts must resolve the
-  # pinned submodule's own Yarn/pnpm release on Windows.
-  upstream-command-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare root and fork pnpm versions
+        run: |
+          corepack prepare pnpm@9.15.0 --activate
+          corepack prepare pnpm@11.7.0 --activate
+
+      - name: Cache pnpm stores
+        uses: actions/cache@v6
         with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22.23.2
-      - run: corepack enable
-      - run: yarn check:layout
-      - run: yarn upstream:version
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'packages/deepseek-harness/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install root workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Install fork kernel
+        working-directory: packages/deepseek-harness
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build fork kernel
+        working-directory: packages/deepseek-harness
+        run: pnpm run build
+
+      - name: Build root packages
+        run: pnpm run build
+
+      - name: Typecheck root packages
+        run: pnpm run typecheck
+
+      - name: Lint root workspace
+        run: pnpm run lint
+
+      - name: Test fork kernel
+        working-directory: packages/deepseek-harness
+        run: pnpm run test
+
+      - name: Desktop compatibility smokes
+        run: |
+          node spike/profile-ensure.mjs
+          node spike/mode-smoke.mjs
+          node spike/loader-smoke.mjs
+          node spike/smoke-pnpm.mjs
