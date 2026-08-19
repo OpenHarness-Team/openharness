@@ -61,11 +61,17 @@ pnpm run fork:dev:web
 桌面端安装包(未签名)按平台构建:
 
 ```sh
-pnpm run stage-runtime   # 生成打包态 runtime 闭包
-pnpm run runtime-gate    # 校验闭包完整性
-pnpm run desktop:package # electron-builder --dir
+# 根脚本：构建插件 → staging runtime 闭包 → runtime-gate → electron-builder
+pnpm run dist:mac
+pnpm run dist:win
+pnpm run dist:linux
 
-# 或直接:
+# 等价于:
+pnpm run release:mac
+pnpm run release:win
+pnpm run release:linux
+
+# 仅在桌面包内直接构建(仍会自动 staging + gate):
 pnpm --filter @openharness/desktop run package:mac
 pnpm --filter @openharness/desktop run package:win
 pnpm --filter @openharness/desktop run package:linux
