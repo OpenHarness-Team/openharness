@@ -136,7 +136,7 @@
 
 ## Phase 6 — CI 与发布
 
-1. ✅ **Linux compatibility CI 已就位(2026-08-19)**:`.github/workflows/ci.yml` 重写为根 workspace(pnpm 9.15.0,corepack)与 fork 内核(pnpm 11.7.0,在 fork 目录内 corepack 选择)双版本流程;顺序为根 install → fork install/build → 根 build/typecheck/lint → fork test → desktop compatibility smokes(`profile-ensure`/`mode-smoke`/`loader-smoke`/`smoke-pnpm`)。**Windows NSIS / 签名构建的 runner job 仍随 Phase 4 外部环境补**。
+1. ✅ **Linux compatibility CI 已就位并实际跑通(2026-08-19)**:`.github/workflows/ci.yml` 重写为根 workspace(pnpm 9.15.0,corepack)与 fork 内核(pnpm 11.7.0,在 fork 目录内 corepack 选择)双版本流程;顺序为根 install → fork install/build → 根 build/typecheck/lint → fork test → desktop compatibility smokes(`profile-ensure`/`mode-smoke`/`loader-smoke`/`smoke-pnpm`)。GitHub Actions 实际 run 已全绿(10m19s;fork test 在 Linux 排除一个上游时序敏感的 `process-exit.spec.ts`,见 workflow 注释)。**Windows NSIS / 签名构建的 runner job 仍随 Phase 4 外部环境补**。
 2. ✅ **changesets 版本联动(2026-08-19)**:`.changeset/config.json` 修复无效 `ignore`,并把 `dsh-plugin-desktop` 与 `@openharness/desktop` 设为 `linked`;fork 因不在根 workspace glob 中天然不参与 changesets,版本语义由补丁台账 + 基线元数据表达。发布/发布工作流等确有可发布目标时再接。
 3. Release 工件:安装包 + SHA-256 摘要。
 
