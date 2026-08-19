@@ -12,7 +12,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder --dir",
-    "release": "electron-vite build && electron-builder"
+    "release": "electron-vite build && electron-builder",
+    "package:mac": "electron-vite build && electron-builder --mac dmg zip",
+    "package:win": "electron-vite build && electron-builder --win nsis",
+    "package:linux": "electron-vite build && electron-builder --linux AppImage deb",
+    "release:mac": "electron-vite build && electron-builder --mac dmg zip",
+    "release:win": "electron-vite build && electron-builder --win nsis",
+    "release:linux": "electron-vite build && electron-builder --linux AppImage deb"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

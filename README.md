@@ -45,16 +45,28 @@ workspace 内启动 Host,renderer 是经 loopback carrier 加载的官方 Web UI
 ```sh
 # 前置(首次或 fork 变更后):构建 fork 内核 + 插件包
 pnpm run fork:install
-pnpm --dir packages/deepseek-harness run build:lib:host
-pnpm --dir packages/deepseek-harness run build:lib:client
-pnpm --dir packages/deepseek-harness run build:web
-pnpm --filter dsh-plugin-desktop build
+pnpm run fork:build
+pnpm run build
 
 # 终端 1:桌面应用(main 变更自动重建重启)
-pnpm --filter @openharness/desktop dev
+pnpm run desktop:dev
 
 # 终端 2(可选,仅当迭代 client 插件/官方前端时):client bundle watcher
-pnpm --dir packages/deepseek-harness run dev:web
+pnpm run fork:dev:web
 ```
 
-验证工具见 `spike/`(boot-test / run-electron / loader-smoke / profile-ensure)。
+验证工具:根脚本 `smoke:loader`、`smoke:pnpm`、`smoke:packaged-pnpm`、`smoke:packaged-add`,
+或 `spike/` 下的原始脚本。
+
+桌面端安装包(未签名)按平台构建:
+
+```sh
+pnpm run stage-runtime   # 生成打包态 runtime 闭包
+pnpm run runtime-gate    # 校验闭包完整性
+pnpm run desktop:package # electron-builder --dir
+
+# 或直接:
+pnpm --filter @openharness/desktop run package:mac
+pnpm --filter @openharness/desktop run package:win
+pnpm --filter @openharness/desktop run package:linux
+```
