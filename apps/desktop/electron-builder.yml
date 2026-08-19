@@ -41,3 +41,4 @@ linux:
 deb:
   # Avoid fpm writing into a non-existent scoped `@openharness/` directory.
   packageName: openharness-desktop
+  artifactName: openharness-desktop-${version}-${arch}.${ext}
