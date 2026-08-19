@@ -44,6 +44,10 @@
       "types": "./lib/host/probe-plugin.d.ts",
       "default": "./lib/host/probe-plugin.js"
     },
+    "./host/probe-add": {
+      "types": "./lib/host/probe-add.d.ts",
+      "default": "./lib/host/probe-add.js"
+    },
     "./client": {
       "types": "./lib/client/index.d.ts",
       "default": "./lib/client/index.js"
