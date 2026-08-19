@@ -22,6 +22,7 @@ const RUNTIME = join(ROOT, 'runtime');
 const STAGE = join(RUNTIME, 'desktop');
 const PLUGIN = join(ROOT, 'packages', 'dsh-plugin-desktop');
 const RUNTIME_FAMILY = '0.1.0-rc.7';
+const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 mkdirSync(STAGE, { recursive: true });
 
@@ -39,9 +40,10 @@ if (!existsSync(join(PLUGIN, 'lib', 'host', 'bridge.js'))) {
 // tarball installs as a real, physical directory in the staged tree.
 const pluginManifest = JSON.parse(readFileSync(join(PLUGIN, 'package.json'), 'utf8'));
 const pluginTarball = join(RUNTIME, `${pluginManifest.name}-${pluginManifest.version}.tgz`);
-execFileSync('npm', ['pack', '--pack-destination', RUNTIME], {
+execFileSync(NPM_COMMAND, ['pack', '--pack-destination', RUNTIME], {
   cwd: PLUGIN,
   stdio: 'inherit',
+  shell: process.platform === 'win32',
 });
 
 const manifest = {
@@ -71,8 +73,9 @@ console.log(`stage-runtime: installing closure into ${STAGE}`);
 // virtual store), which would leave a pnpm-staged closure as dangling
 // symlinks inside the app bundle. npm installs real directories.
 // --ignore-scripts matches the fork install stance (no postinstall hooks).
-execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+execFileSync(NPM_COMMAND, ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
   cwd: STAGE,
   stdio: 'inherit',
+  shell: process.platform === 'win32',
 });
 console.log('stage-runtime: done; verify with node scripts/runtime-gate.mjs');
