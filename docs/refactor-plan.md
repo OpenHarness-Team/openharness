@@ -119,14 +119,14 @@
 7. ✅ onboarding(Phase 3 已完成)。
 8. ✅ **macOS 未签名安装包与冷启动(2026-08-18)**:`electron-builder --mac dmg zip` 产出 arm64 dmg/zip;staged runtime 为完整物理闭包(runtime-gate PASS);`.app` 冷启动后 Host 子进程从 `Resources/runtime` 启动,carrier 200(`DeepSeek Harness`)、控制面 401,退出后无孤儿进程、端口释放。
 9. ✅ **打包态 `desktopPnpm.runPlugin()` 可执行选择与子进程私有环境(2026-08-18)**:staging 内置 pnpm 11.7.0;launcher 组合 Electron-as-node 的 `pnpmCommand`/`dshCommand`、生成 `pnpm`/`node` PATH shim,并注入 `DSH_HOME`。冒烟 `spike/smoke-packaged-pnpm.mjs` 在 node 与 Electron 两种形态下均输出 `SMOKE_PACKAGED_PNPM_OK exit=0 version=11.7.0`。
+10. ✅ **打包态第三方插件 `dsh plugin add` 安装链路冒烟(2026-08-19)**:`spike/smoke-packaged-plugin-add.mjs` 打包本地 bundle tarball,经 `runPlugin(['add', tarball])` 安装到 profile;依赖、`node_modules` 与 `dsh.profile.bundles` 协调均断言通过。node / Electron 双形态输出 `SMOKE_PACKAGED_PLUGIN_ADD_OK`。
 
 **剩余(需要目标平台/签名环境)**
 
 - Windows 真实执行 `electron-builder`(nsis),产物冷启动验证。
 - macOS/Windows 代码签名与公证。
-- 第三方插件在打包态经 `dsh plugin` 的安装链路(依赖 runPlugin + 内置 pnpm)。
 
-**验收(已达成部分)**:控制通道与 desktopPnpm 全链路冒烟通过;staged 闭包 gate PASS;macOS 未签名 dmg/zip + `.app` 冷启动通过;打包态 `runPlugin()` 的 argv/env 选择已冒烟通过。**安装包级剩余验收**:Windows 冷启动、代码签名/公证、第三方插件 `dsh plugin` 实际安装链路。
+**验收(已达成部分)**:控制通道与 desktopPnpm 全链路冒烟通过;staged 闭包 gate PASS;macOS 未签名 dmg/zip + `.app` 冷启动通过;打包态 `runPlugin()` 与第三方插件实际 `dsh plugin add` 安装链路均已冒烟通过。**安装包级剩余验收**:Windows 冷启动、代码签名/公证。
 
 ## Phase 5 — advanced 模式与增强(可选增量)
 
