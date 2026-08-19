@@ -38,5 +38,6 @@ linux:
     - AppImage
     - deb
   category: Development
-  # Avoid fpm writing a deb into a non-existent `@openharness/` directory.
+deb:
+  # Avoid fpm writing into a non-existent scoped `@openharness/` directory.
   packageName: openharness-desktop
