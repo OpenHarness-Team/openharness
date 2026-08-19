@@ -7,6 +7,7 @@
  */
 
 import { type BrowserWindow, app } from 'electron';
+import { registerDirectoryBridge } from './directory-bridge.js';
 import { Launcher } from './launcher.js';
 import { type TrayHandlers, createTray } from './tray.js';
 import { createMainWindow } from './window.js';
@@ -27,6 +28,7 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(async () => {
     try {
+      registerDirectoryBridge();
       const carrierUrl = await launcher.start();
       mainWindow = createMainWindow(carrierUrl, launcher.activeMode());
       mainWindow.webContents.once('did-finish-load', () => {

@@ -12,4 +12,11 @@ export default defineConfig({
       },
     },
   },
+  preload: {
+    build: {
+      rollupOptions: {
+        input: { directory: resolve(__dirname, 'src/preload/directory.ts') },
+      },
+    },
+  },
 });

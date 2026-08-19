@@ -7,6 +7,8 @@
  * @module apps/desktop/main/window
  */
 
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { BrowserWindow, shell } from 'electron';
 import type { DesktopMode } from './overlay.js';
 
@@ -52,6 +54,7 @@ export function createMainWindow(
   carrierUrl: string,
   mode: DesktopMode = 'compatibility',
 ): BrowserWindow {
+  const preloadPath = join(dirname(fileURLToPath(import.meta.url)), '../preload/directory.mjs');
   const window = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -63,6 +66,7 @@ export function createMainWindow(
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      preload: preloadPath,
     },
   });
 

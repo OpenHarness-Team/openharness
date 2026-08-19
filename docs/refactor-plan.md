@@ -131,8 +131,8 @@
 ## Phase 5 — advanced 模式与增强(可选增量)
 
 1. advanced 模式:禁用官方 `ui-layout` row,desktop Client 提供 layout service + root occupant;theme presenter;macOS hiddenInset + vibrancy / Windows Mica;Linux 拒绝。
-2. Windows 目录选择桥(`dialog.showOpenDialog` 同源路由)、本地目录拖放(webUtils 隔离 preload)。
-3. parked 应用(`apps/web`/`apps/cli`/`apps/mobile`)重新评估:浏览器面默认由 fork 的 web profile 覆盖,确有差异化需求再立项。
+2. ✅ **Windows 目录选择桥与本地目录拖放(2026-08-19)**:`apps/desktop` 增加隔离 preload(`desktopDirectory.selectDirectory` / `pathForFile`)与主进程 `dialog.showOpenDialog` IPC(`desktop:select-directory`),electron-vite 增加 preload 构建。当前仅暴露基础设施,官方 UI 尚无可调用入口,后续由具体客户端功能接入。
+3. ✅ **parked 应用重评估(2026-08-19)**:浏览器面默认由 fork 的 `web` profile 覆盖,当前无独立 `apps/web`/`apps/cli`/`apps/mobile` 的差异化需求;三者继续 parked,不立项。
 
 ## Phase 6 — CI 与发布
 
