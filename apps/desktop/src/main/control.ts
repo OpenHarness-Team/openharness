@@ -43,14 +43,13 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown> |
 /** Start the control server on an ephemeral loopback port. */
 export async function startControlServer(handlers: ControlHandlers): Promise<ControlServer> {
   const token = randomBytes(24).toString('base64url');
-  let server!: Server;
 
   const reply = (res: ServerResponse, status: number, payload: object): void => {
     res.writeHead(status, { 'content-type': 'application/json' });
     res.end(JSON.stringify(payload));
   };
 
-  server = createServer((req, res) => {
+  const server: Server = createServer((req, res) => {
     const authorized = req.headers['x-dsh-desktop-token'] === token;
     if (!authorized) return reply(res, 401, { error: 'unauthorized' });
     if (req.method === 'POST' && req.url === '/bridge/register') {

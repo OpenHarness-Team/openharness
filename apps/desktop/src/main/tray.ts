@@ -8,7 +8,7 @@
  */
 
 import { Menu, Tray, nativeImage } from 'electron';
-import { type DesktopMode } from './mode.js';
+import type { DesktopMode } from './mode.js';
 import { WINDOW_TITLE } from './window.js';
 
 /** 16x16 RGBA placeholder mark; product icon replaces it in Phase 4. */

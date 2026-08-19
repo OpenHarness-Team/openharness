@@ -48,7 +48,10 @@ function advancedWindowOptions(mode: DesktopMode): Record<string, unknown> {
  * @param mode - Presentation mode the generation was composed for.
  * @returns The constructed BrowserWindow.
  */
-export function createMainWindow(carrierUrl: string, mode: DesktopMode = 'compatibility'): BrowserWindow {
+export function createMainWindow(
+  carrierUrl: string,
+  mode: DesktopMode = 'compatibility',
+): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
     height: 860,

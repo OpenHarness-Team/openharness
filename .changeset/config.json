@@ -3,12 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [
-    [
-      "dsh-plugin-desktop",
-      "@openharness/desktop"
-    ]
-  ],
+  "linked": [["dsh-plugin-desktop", "@openharness/desktop"]],
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
