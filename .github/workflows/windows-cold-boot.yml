@@ -1,0 +1,116 @@
+name: Windows cold boot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+  DSH_TELEMETRY_DISABLED: '1'
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+  CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+jobs:
+  boot:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22.23.2
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare root pnpm
+        run: corepack prepare pnpm@9.15.0 --activate
+
+      - name: Cache root pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-winboot-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-winboot-
+
+      - name: Install root workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop plugin
+        run: pnpm --filter dsh-plugin-desktop build
+
+      - name: Stage packaged runtime closure
+        run: node scripts/stage-runtime.mjs
+
+      - name: Verify packaged runtime gate
+        run: node scripts/runtime-gate.mjs
+
+      - name: Build NSIS installer
+        run: pnpm --filter @openharness/desktop release
+
+      - name: Silent install
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem -Recurse apps/desktop/dist-electron -Filter *.exe |
+            Where-Object { $_.Name -like '*Setup*' } |
+            Select-Object -First 1
+          if (-not $setup) { throw 'NSIS setup exe not found' }
+          Write-Host "Installing $($setup.FullName)"
+          Start-Process -Wait -FilePath $setup.FullName -ArgumentList '/S'
+
+      - name: Launch installed app and verify loopback
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "$env:LOCALAPPDATA\Programs\OpenHarness Desktop\OpenHarness Desktop.exe",
+            "$env:LOCALAPPDATA\Programs\openharness-desktop\OpenHarness Desktop.exe",
+            "$env:PROGRAMFILES\OpenHarness Desktop\OpenHarness Desktop.exe"
+          )
+          $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $exe) {
+            $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'OpenHarness Desktop.exe' -ErrorAction SilentlyContinue |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $exe) { throw 'installed OpenHarness Desktop.exe not found' }
+
+          Write-Host "Launching $exe"
+          $proc = Start-Process -FilePath $exe -PassThru
+          $deadline = (Get-Date).AddSeconds(120)
+          $found = $false
+
+          while ((Get-Date) -lt $deadline -and -not $found) {
+            Start-Sleep -Seconds 3
+            $listeners = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
+              Where-Object { $_.LocalAddress -eq '127.0.0.1' }
+            foreach ($listener in $listeners) {
+              try {
+                $owner = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+                if ($owner -and $owner.Path -like '*OpenHarness Desktop*') {
+                  try {
+                    $resp = Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:$($listener.LocalPort)/" -TimeoutSec 5
+                    if ($resp.StatusCode -eq 200 -and $resp.Content -like '*DeepSeek Harness*') {
+                      Write-Host "WINDOWS_COLD_BOOT_OK port=$($listener.LocalPort) status=$($resp.StatusCode)"
+                      $found = $true
+                      break
+                    }
+                  } catch {
+                    # Control plane returns 401 and is not the carrier; keep looking.
+                  }
+                }
+              } catch {
+                # Listener vanished between enumeration and owner lookup.
+              }
+            }
+          }
+
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          if (-not $found) {
+            throw 'Windows cold boot failed: no loopback carrier served the DeepSeek Harness UI'
+          }
